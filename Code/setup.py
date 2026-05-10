@@ -87,3 +87,5 @@ ax.legend(ncol=5, fontsize=8)
 plt.tight_layout()
 plt.savefig("Output/price_paths.png", dpi=150)
 plt.show()
+
+returns.to_excel("Data/cleaned_data.xlsx")
