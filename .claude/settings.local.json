@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//c/Users/marti/anaconda3/envs//**)",
-      "Read(//c/Users/marti/AppData/Local/anaconda3/**)"
-    ]
-  }
-}
