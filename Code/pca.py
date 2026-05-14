@@ -15,13 +15,6 @@ prices_wide = raw.pivot(index="Date", columns="Ticker", values="Price").dropna()
 ret_wide    = raw.pivot(index="Date", columns="Ticker", values="ReturnRaw").loc[prices_wide.index].dropna()
 returns     = np.log(1 + ret_wide)
 
-# PCA on the correlation matrix
-# Assets span very different volatility regimes (HYG std ~0.5%, ASML std ~2.3%).
-# PCA on the covariance matrix would be dominated by the highest-variance equities.
-# Standardising to unit variance (= working on the correlation matrix) ensures the
-# analysis captures co-movement structure independent of scale.
-# pandas .std() uses ddof=1 (sample std), so the eigenvalues of the resulting
-# covariance matrix equal those of the sample correlation matrix and sum to n_assets=10.
 X       = ((returns - returns.mean()) / returns.std()).values
 pca     = PCA()
 F_all   = pca.fit_transform(X)
@@ -32,12 +25,6 @@ print(f"Eigenvalues           : {np.round(eigvals, 3)}")
 print(f"Variance (each)       : {np.round(var_expl, 3)}")
 print(f"Variance (cumulative) : {np.round(np.cumsum(var_expl), 3)}")
 
-# Number of factors
-# The Kaiser criterion (eigenvalue > 1) selects k=2 (PC1=5.05, PC2=1.46).
-# PC3 (eigenvalue=0.95) is just below the threshold but captures a distinct,
-# economically interpretable factor (see loadings below).  Including it raises
-# cumulative variance from 65.1% to 74.6% and lifts XOM's R2 from 0.42 to 0.78,
-# confirming it contains genuine co-movement structure.  We therefore retain k=3.
 k = 3
 
 # Scree plot with cumulative variance
@@ -66,23 +53,6 @@ loadings = pd.DataFrame(
     columns=[f"PC{j+1}" for j in range(k)]
 )
 
-# PC1 (50.5%): global equity/risk factor.  All equity-like assets load strongly
-# (SPY 0.96, EEM 0.84, HYG 0.81, MSFT 0.80, AAPL 0.77, JPM 0.75, ASML 0.74, XOM 0.61).
-# TLT loads negatively (-0.24), reflecting the conventional flight-to-quality
-# equity-bond relationship.  GLD is near-zero (0.07), consistent with gold's
-# idiosyncratic safe-haven role that is largely uncorrelated with equity market moves.
-#
-# PC2 (14.6%): safe-haven / duration factor.  TLT (0.79) and GLD (0.75) load
-# strongly, capturing assets that appreciate in risk-off regimes or when real yields
-# fall.  JPM loads negatively (-0.35): bank profitability improves with higher rates
-# (steeper yield curve widens net interest margins) while long Treasuries suffer,
-# creating the observed opposition.
-#
-# PC3 (9.5%): energy/commodity vs. growth-tech factor.  XOM (0.60) and GLD (0.45)
-# load positively; MSFT (-0.36) and AAPL (-0.34) load negatively.  This captures the
-# divergence between commodity-sensitive assets (which benefit from high oil prices
-# and inflation) and growth/tech stocks (which suffer when rates rise alongside
-# commodity booms).  Including PC3 raises XOM's R2 from 0.42 to 0.78.
 print("\nFactor Loadings:")
 print(loadings.round(3))
 
